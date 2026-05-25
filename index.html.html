@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>العدالة والقانون</title>
+    
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="العدالة والقانون">
+    
+    <link rel="apple-touch-icon" href="/icon.jpg">
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+    
+    <style> 
+        body { 
+            font-family: 'Cairo', sans-serif; 
+            /* وضع صورتك الفخمة كخلفية ممتدة للتطبيق بالكامل بكاميرا الآيفون */
+            background: linear-gradient(to bottom, rgba(15, 23, 42, 0.85), rgba(15, 23, 42, 0.95)), url('/icon.jpg');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            -webkit-tap-highlight-color: transparent; 
+        } 
+    </style>
+</head>
+<body class="text-slate-200 min-h-screen flex flex-col justify-between select-none">
+
+    <header class="border-b border-slate-800/60 bg-slate-950/80 backdrop-blur-md sticky top-0 z-50 p-4 text-center">
+        <h1 class="text-md font-bold text-amber-500 tracking-wide">العدالة الذكية Pro ⚖️</h1>
+    </header>
+
+    <main class="container mx-auto px-4 py-4 flex-grow max-w-xl">
+        
+        <div class="bg-slate-950/70 backdrop-blur-md border border-slate-800/80 rounded-2xl p-5 shadow-2xl mb-6">
+            <h3 class="text-xs font-bold text-slate-300 mb-3 text-center">اضغط بالأسفل لتصوير أو اختيار ملفات القضية</h3>
+            
+            <input type="file" id="fileInput" accept="image/*" multiple class="block w-full text-xs text-slate-400 file:mr-3 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-amber-600 file:text-white hover:file:bg-amber-500 cursor-pointer bg-slate-900/60 rounded-xl border border-slate-800 p-1">
+            
+            <button id="analyzeBtn" class="w-full mt-4 bg-amber-600 hover:bg-amber-500 text-white font-bold py-3 rounded-xl text-xs flex items-center justify-center gap-2 shadow-lg transition-all active:scale-95">
+                <i class="fa-solid fa-wand-magic-sparkles"></i> ابدأ الفحص المستندي المباشر
+            </button>
+        </div>
+
+        <div id="loadingState" class="hidden text-center p-8 bg-slate-950/80 backdrop-blur-md rounded-2xl border border-slate-800">
+            <div class="w-10 h-10 rounded-full border-2 border-slate-800 border-t-amber-500 animate-spin mx-auto mb-3"></div>
+            <p class="text-xs text-slate-300">جاري فحص المستندات واستخراج الأخطاء القانونية...</p>
+        </div>
+        
+        <div id="resultsState" class="hidden space-y-4">
+            <div class="bg-slate-950/80 backdrop-blur-md border border-red-900/40 rounded-xl p-4 shadow-xl">
+                <h4 class="text-red-400 font-bold text-xs mb-2 flex items-center gap-2">❌ أخطاء وبطلان في الإجراءات</h4>
+                <ul id="errorsList" class="list-disc list-inside space-y-1 text-xs text-slate-300 pr-1"></ul>
+            </div>
+            <div class="bg-slate-950/80 backdrop-blur-md border border-emerald-900/40 rounded-xl p-4 shadow-xl">
+                <h4 class="text-emerald-400 font-bold text-xs mb-2 flex items-center gap-2">✅ أدلة البراءة المستنتجة</h4>
+                <ul id="evidenceList" class="list-disc list-inside space-y-1 text-xs text-slate-300 pr-1"></ul>
+            </div>
+            <div class="bg-slate-950/80 backdrop-blur-md border border-amber-900/40 rounded-xl p-4 shadow-xl">
+                <h4 class="text-amber-400 font-bold text-xs mb-2 flex items-center gap-2">💡 ثغرات الدفاع المقترحة</h4>
+                <ul id="loopholesList" class="list-disc list-inside space-y-1 text-xs text-slate-300 pr-1"></ul>
+            </div>
+        </div>
+    </main>
+
+    <footer class="text-center py-4 text-[10px] text-slate-500 bg-slate-950/40 backdrop-blur-sm">
+        منصة العدالة الذكية للاستخدام الشخصي &copy; 2026
+    </footer>
+
+    <script>
+        const fileInput = document.getElementById('fileInput');
+        const analyzeBtn = document.getElementById('analyzeBtn');
+        const loadingState = document.getElementById('loadingState');
+        const resultsState = document.getElementById('resultsState');
+
+        const API_URL = window.location.origin + '/api/analyze';
+        const SECURITY_TOKEN = 'Ahmed2004'; 
+
+        analyzeBtn.addEventListener('click', async () => {
+            if (!fileInput.files || fileInput.files.length === 0) { alert('من فضلك اختر صور المحضر أولاً!'); return; }
+            
+            resultsState.classList.add('hidden'); 
+            loadingState.classList.remove('hidden');
+            
+            const formData = new FormData();
+            for (let i = 0; i < fileInput.files.length; i++) { 
+                formData.append("files", fileInput.files[i]); 
+            }
+            
+            try {
+                const response = await fetch(API_URL, { 
+                    method: 'POST', 
+                    body: formData,
+                    headers: { 'X-Token': SECURITY_TOKEN }
+                });
+                
+                if (!response.ok) throw new Error('تعذر التحليل، تأكد من وضوح الصورة');
+                
+                const data = await response.json();
+                
+                document.getElementById('errorsList').innerHTML = data.errors.map(i => `<li>${i}</li>`).join('') || '<li>لا يوجد بطلان واضح</li>';
+                document.getElementById('evidenceList').innerHTML = data.evidence.map(i => `<li>${i}</li>`).join('') || '<li>لا توجد أدلة براءة مباشرة</li>';
+                document.getElementById('loopholesList').innerHTML = data.loopholes.map(i => `<li>${i}</li>`).join('') || '<li>لا توجد ثغرات مقترحة</li>';
+                
+                loadingState.classList.add('hidden'); 
+                resultsState.classList.remove('hidden');
+                
+            } catch (error) {
+                loadingState.classList.add('hidden'); 
+                alert(`فشل الفحص: ${error.message}`);
+            }
+        });
+
+        // 🚀 كود الحفاظ على السيرفر صاحي دايماً ومنعه من النوم
+        setInterval(() => {
+            fetch(window.location.origin + '/api/ping').catch(() => {});
+        }, 5 * 60 * 1000); // إرسال إشارة تنشيط كل 5 دقائق
+    </script>
+</body>
+</html>
